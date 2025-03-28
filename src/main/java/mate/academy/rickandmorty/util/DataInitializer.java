@@ -1,6 +1,8 @@
 package mate.academy.rickandmorty.util;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import mate.academy.rickandmorty.dto.CharacterMapper;
 import mate.academy.rickandmorty.dto.external.ExternalCharacterDto;
 import mate.academy.rickandmorty.model.Character;
 import mate.academy.rickandmorty.repository.CharacterRepository;
@@ -10,35 +12,21 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class DataInitializer {
 
     private final RickAndMortyClient client;
     private final CharacterRepository characterRepository;
-
-    public DataInitializer(RickAndMortyClient client, CharacterRepository characterRepository) {
-        this.client = client;
-        this.characterRepository = characterRepository;
-    }
+    private final CharacterMapper mapper;
 
     @EventListener(ApplicationReadyEvent.class)
     public void initDataOnApplicationStartup() {
         List<ExternalCharacterDto> fetched = client.getAllCharacters();
 
         List<Character> characters = fetched.stream()
-                .map(this::toModel)
+                .map(mapper::toModel)
                 .toList();
 
         characterRepository.saveAll(characters);
-    }
-
-    private Character toModel(ExternalCharacterDto character) {
-        String externalId = character.id();
-        return new Character(
-                null,
-                externalId,
-                character.name(),
-                character.status(),
-                character.gender()
-        );
     }
 }
